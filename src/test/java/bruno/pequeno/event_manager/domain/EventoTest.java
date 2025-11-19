@@ -90,7 +90,6 @@ public class EventoTest {
         List<TipoIngresso> tipos = List.of(vip);
 
         Evento evento = new Evento(nome, local, data, tipos);
-
         evento.inscreverUsuario(1L, "VIP");
         evento.inscreverUsuario(2L, "VIP");
 
@@ -107,7 +106,6 @@ public class EventoTest {
         List<TipoIngresso> tipos = List.of(vip);
 
         Evento evento = new Evento(nome, local, data, tipos);
-
         evento.inscreverUsuario(1L, "VIP");
 
         assertThrows(IllegalArgumentException.class, () -> evento.inscreverUsuario(1L, "VIP"));
@@ -119,7 +117,7 @@ public class EventoTest {
         String local = "São Paulo";
         LocalDateTime data = LocalDateTime.now().plusDays(30);
 
-        TipoIngresso vip = new TipoIngresso("VIP", 2, BigDecimal.valueOf(220)); // Só 2 vagas
+        TipoIngresso vip = new TipoIngresso("VIP", 2, BigDecimal.valueOf(220));
         List<TipoIngresso> tipos = List.of(vip);
 
         Evento evento = new Evento(nome, local, data, tipos);
@@ -130,7 +128,69 @@ public class EventoTest {
         assertThrows(IllegalArgumentException.class, () -> evento.inscreverUsuario(3L, "VIP"));
 
         inscricaoQueSeraCancelada.cancelar();
-
         assertDoesNotThrow(() -> evento.inscreverUsuario(3L, "VIP"));
+    }
+
+    @Test
+    void deveFalharAoBuscarTipoDeIngressoInexistente() {
+        String nome = "JavaConf 2025";
+        String local = "São Paulo";
+        LocalDateTime data = LocalDateTime.now().plusDays(30);
+
+        TipoIngresso vip = new TipoIngresso("VIP", 2, BigDecimal.valueOf(220));
+        List<TipoIngresso> tipos = List.of(vip);
+
+        Evento evento = new Evento(nome, local, data, tipos);
+
+        assertThrows(IllegalArgumentException.class, () -> evento.inscreverUsuario(1L, "PREMIUM"));
+    }
+
+    @Test
+    void deveRetornarQuantidadeDeVagasDisponiveisEVagasDisponiveisPorTipoIngresso() {
+        String nome = "JavaConf 2025";
+        String local = "São Paulo";
+        LocalDateTime data = LocalDateTime.now().plusDays(30);
+
+        TipoIngresso vip = new TipoIngresso("VIP", 2, BigDecimal.valueOf(220));
+        TipoIngresso comum = new TipoIngresso("COMUM", 5, BigDecimal.valueOf(220));
+        List<TipoIngresso> tipos = List.of(vip, comum);
+
+        Evento evento = new Evento(nome, local, data, tipos);
+
+        evento.inscreverUsuario(1L, "VIP");
+        evento.inscreverUsuario(2L, "VIP");
+        evento.inscreverUsuario(3L, "COMUM");
+        evento.inscreverUsuario(4L, "COMUM");
+        evento.inscreverUsuario(5L, "COMUM");
+
+        assertEquals(2, evento.vagasDisponiveis());
+    }
+
+    @Test
+    void deveRetornarQuantidadeDeInscricoesAtivasEInscricoesAtivasPorIngreso() {
+        String nome = "JavaConf 2025";
+        String local = "São Paulo";
+        LocalDateTime data = LocalDateTime.now().plusDays(30);
+
+        TipoIngresso vip = new TipoIngresso("VIP", 2, BigDecimal.valueOf(220));
+        TipoIngresso comum = new TipoIngresso("COMUM", 5, BigDecimal.valueOf(220));
+        List<TipoIngresso> tipos = List.of(vip, comum);
+
+        Evento evento = new Evento(nome, local, data, tipos);
+
+        Inscricao inscricaoA = evento.inscreverUsuario(1L, "VIP");
+        Inscricao inscricaoB = evento.inscreverUsuario(2L, "VIP");
+        Inscricao inscricaoC = evento.inscreverUsuario(3L, "COMUM");
+        evento.inscreverUsuario(4L, "COMUM");
+
+        inscricaoA.confirmar();
+        inscricaoB.cancelar();
+        inscricaoC.confirmar();
+
+        assertEquals(3, evento.inscricoesAtivas());
+        assertEquals(2, evento.inscricoesAtivasPorIngresso("COMUM"));
+        assertEquals(1, evento.inscricoesAtivasPorIngresso("VIP"));
+        assertEquals(1, evento.vagasDisponiveisPorIngresso("VIP"));
+        assertEquals(3, evento.vagasDisponiveisPorIngresso("COMUM"));
     }
 }

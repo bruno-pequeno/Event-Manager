@@ -10,10 +10,10 @@ import java.util.stream.Collectors;
 
 public class Evento {
     private Long id;
-    private String nome;
-    private String local;
-    private LocalDateTime dataEvento;
-    private Map<String, TipoIngresso> ingressos;
+    private final String nome;
+    private final String local;
+    private final LocalDateTime dataEvento;
+    private final Map<String, TipoIngresso> ingressos;
     private final List<Inscricao> inscricoes = new ArrayList<>();
 
     public Evento(String nome, String local, LocalDateTime dataEvento, List<TipoIngresso> ingressos) {
@@ -111,6 +111,44 @@ public class Evento {
                 .count();
 
         return inscricoesAtivas < tipo.getLimiteVagas();
+    }
+
+    public long vagasDisponiveis() {
+        long inscricoesAtivas = inscricoes.stream()
+                .filter(i -> i.getStatusInscricao() != StatusInscricao.CANCELADA)
+                .count();
+
+        long vagasTotais = ingressos.values().stream()
+                .mapToLong(TipoIngresso::getLimiteVagas)
+                .sum();
+
+        return Math.max(vagasTotais - inscricoesAtivas, 0);
+    }
+
+    public long vagasDisponiveisPorIngresso(String tipo) {
+        TipoIngresso ingresso = buscarTipoIngresso(tipo);
+
+        long inscricoesAtivas = inscricoes.stream()
+                .filter(i -> i.getStatusInscricao() != StatusInscricao.CANCELADA
+                        && i.getTipoIngresso().equals(ingresso))
+                .count();
+
+        return Math.max(ingresso.getLimiteVagas() - inscricoesAtivas, 0);
+    }
+
+    public long inscricoesAtivas() {
+        return inscricoes.stream()
+                .filter(i -> i.getStatusInscricao() != StatusInscricao.CANCELADA)
+                .count();
+    }
+
+    public long inscricoesAtivasPorIngresso(String tipo) {
+        TipoIngresso ingresso = buscarTipoIngresso(tipo);
+
+        return inscricoes.stream()
+                .filter(i -> i.getStatusInscricao() != StatusInscricao.CANCELADA
+                        && i.getTipoIngresso().equals(ingresso))
+                .count();
     }
 
     public Long getId() {
